@@ -1,0 +1,17 @@
+PageInfo:
+  project: DemoQA
+  feature: Buttons
+  name: DemoQA Buttons Page
+  url: https://demoqa.com/buttons
+
+elements:
+  buttonClickMe:
+    type: button
+    locator:
+      by: xpath
+      value: "//button[text()='Click Me']"
+  messageText:
+    type: text
+    locator:
+      by: id
+      value: dynamicClickMessage

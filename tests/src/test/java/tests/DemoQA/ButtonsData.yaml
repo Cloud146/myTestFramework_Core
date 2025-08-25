@@ -1,0 +1,3 @@
+TestData:
+  expected:
+    clickMessage: "You have done a dynamic click"
