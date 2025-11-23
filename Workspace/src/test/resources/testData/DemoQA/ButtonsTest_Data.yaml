@@ -1,0 +1,17 @@
+- Сценарий: Тест двойного клика
+  Тестовые данные:
+    DoubleClickMessage:
+      тип: текст
+      значение: "You have done a double click"
+
+- Сценарий: Тест правого клика
+  Тестовые данные:
+    RightClickMessage:
+      тип: текст
+      значение: "You have done a right click"
+
+- Сценарий: Тест клика
+  Тестовые данные:
+    DynamicClickMessage:
+      тип: текст
+      значение: "You have done a dynamic click"
