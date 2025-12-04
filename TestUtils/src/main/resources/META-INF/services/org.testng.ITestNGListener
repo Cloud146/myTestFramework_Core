@@ -1,3 +1,7 @@
+TestUtils.Helpers.LoggingBootstrapListener
 io.qameta.allure.testng.AllureTestNg
+TestUtils.JavaParallel.ParallelRunListener
+TestUtils.CucumberUtils.CucumberParallelListener
+TestUtils.Helpers.AutoTagListener
 TestUtils.RetryUtil.RetryListener
 TestUtils.ScreenshotUtil.ScreenshotListener

@@ -7,7 +7,6 @@ import io.qameta.allure.Step;
 import logging.Log;
 import org.slf4j.Logger;
 import org.testng.ITestResult;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -17,7 +16,7 @@ public class ScreenshotUtil {
 
     private static final Logger log = Log.get(ScreenshotUtil.class);
 
-    private ScreenshotUtil() { /* util */ }
+    private ScreenshotUtil(){}
 
     /**
      * Снимает скриншот экрана и возвращает PNG как byte[].

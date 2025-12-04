@@ -1,13 +1,16 @@
 package TestUtils.BaseTest;
 
+import CurrentPageUtils.PageContext;
 import FileUtils.TestDataService;
+import TestUtils.Helpers.AdapterManager;
+import TestUtils.Helpers.FrameworkDataInitializer;
+import TestUtils.Helpers.ScenarioLogger;
 import TestUtils.Assertion.AssertUtil;
-import logging.JulBridge;
 import config.RuntimeReader;
 import driverAdapter.AdapterHolder;
 import driverAdapter.DriverAdapter;
-import driverAdapter.DriverAdapterFactory;
 import FileUtils.PageReader;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import logging.Log;
 import org.slf4j.Logger;
@@ -16,10 +19,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import steps.interactions.MouseSteps;
 import steps.navigation.NavigationSteps;
-
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
  * Базовый класс для всех тестов (UI, API, Mobile и т.д.).
@@ -32,7 +32,6 @@ public abstract class BaseTest {
 
     protected DriverAdapter adapter;
     protected PageReader page;
-    protected Map<String, Object> timeouts;
     protected int retryCount;
     private static final Logger log = Log.get(BaseTest.class);
 
@@ -45,68 +44,52 @@ public abstract class BaseTest {
     @Step("Чтение тестовых данных и настроек фреймворка")
     @BeforeClass
     public void initData() {
-        // Чтение тестовых данных (например, pages/*.yaml)
-        TestDataService.initIfNeeded();
-
-        // Читаем глобальные секции из runtime.yaml
-        timeouts = RuntimeReader.getSection("timeouts");
-        Map<String, Object> retry = RuntimeReader.getSection("retry");
-        retryCount = Integer.parseInt(retry.getOrDefault("count", 1).toString());
+        FrameworkDataInitializer.initTestData();
+        retryCount = FrameworkDataInitializer.initRetryCount();
     }
 
     @BeforeMethod
     public void scenarioName(Method testMethod) {
-        String scenarioName = extractDescription(testMethod);
-        log.info("[TESTNG] Сценарий: {}", scenarioName);
-        TestDataService.setCurrentScenario(scenarioName);
+        ScenarioLogger.logScenario(testMethod);
     }
 
-    @Step("Настройка тестового адаптера")
     @BeforeMethod
     public void setUp() {
-        JulBridge.init();
         String engine = RuntimeReader.getString("ui_engine");
 
         if (engine != null && !engine.isBlank()) {
             log.debug("Выбранный движок для ui: {}", engine);
-            adapter = ServiceLoader.load(DriverAdapterFactory.class).stream()
-                    .map(ServiceLoader.Provider::get)
-                    .filter(f -> f.getEngineName().equalsIgnoreCase(engine))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No adapter found for engine: " + engine))
-                    .create();
 
-            AdapterHolder.set(adapter); // кладём в holder
+            DriverAdapter localAdapter = AdapterManager.createAdapter(engine);
 
-            assertUtil = new AssertUtil(adapter);
+            AdapterHolder.set(localAdapter);
 
-            // Инициализация шагов поверх адаптера
-            mouseSteps = new MouseSteps(adapter);
-            navigationSteps = new NavigationSteps(adapter);
+            this.adapter = localAdapter;
+
+            assertUtil = new AssertUtil(localAdapter);
+            mouseSteps = new MouseSteps(localAdapter);
+            navigationSteps = new NavigationSteps(localAdapter);
         } else {
-            adapter = null; // значит это не UI‑тест
+            this.adapter = null;
         }
-
-        // finder не создаём здесь — он будет создан в тесте через openPage("Page Name")
-        page = null;
+        this.page = null;
     }
 
-    @Step("Закрытие тестового адаптера")
     @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        if (adapter != null) {
-            adapter.close();
-        }
-        AdapterHolder.clear(); // очищаем
-        TestDataService.clearCurrentScenario();
-    }
+        long threadId = Thread.currentThread().getId();
+        log.debug("[Thread-{}] >>> Начало tearDown. Закрываем адаптер...", threadId);
 
-    private String extractDescription(Method m) {
-        org.testng.annotations.Test testAnno = m.getAnnotation(org.testng.annotations.Test.class);
-        if (testAnno != null && testAnno.description() != null && !testAnno.description().isBlank()) {
-            return testAnno.description().trim();
+        try {
+            DriverAdapter currentAdapter = AdapterHolder.get();
+            AdapterManager.closeAdapter(currentAdapter);
+            log.debug("[Thread-{}] <<< Адаптер успешно закрыт.", threadId);
+        } catch (Exception e) {
+            log.warn("[Thread-{}] Ошибка при закрытии: {}", threadId, e.getMessage());
+        } finally {
+            AdapterHolder.clear();
+            TestDataService.clearCurrentScenario();
+            PageContext.getHolder().remove();
         }
-        // Фолбэк: имя метода, если description не заполнено
-        return m.getDeclaringClass().getSimpleName() + "." + m.getName();
     }
 }

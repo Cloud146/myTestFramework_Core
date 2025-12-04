@@ -4,16 +4,22 @@ import FileUtils.PageReader;
 
 public final class CurrentPageHolder {
 
-    private volatile PageReader currentPage;
+    private final ThreadLocal<PageReader> currentPage = new ThreadLocal<>();
 
     public PageReader get() {
-        if (currentPage == null) {
-            throw new IllegalStateException("Страница не открыта: currentPage = null");
+        PageReader page = currentPage.get();
+        if (page == null) {
+            throw new IllegalStateException("Страница не открыта: currentPage = null (Thread: " + Thread.currentThread().getId() + ")");
         }
-        return currentPage;
+        return page;
     }
 
     public void set(PageReader page) {
-        this.currentPage = page;
+        this.currentPage.set(page);
+    }
+
+    // НОВОЕ: Нужно для очистки памяти после теста
+    public void remove() {
+        this.currentPage.remove();
     }
 }

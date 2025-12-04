@@ -16,22 +16,22 @@ import org.slf4j.Logger;
  */
 public class MouseSteps {
 
-    private final MouseAdapter mouseAdapter;
     private static final Logger log = Log.get(MouseSteps.class);
 
     public MouseSteps() {
-        this.mouseAdapter = AdapterHolder.get();
     }
 
-    public MouseSteps(MouseAdapter mouseAdapter) {
-        this.mouseAdapter = mouseAdapter;
+    public MouseSteps(MouseAdapter ignored) {}
+
+    private MouseAdapter getAdapter() {
+        return AdapterHolder.get();
     }
 
     @И("Клик по элементу «(.+)»$")
     @Step("Клик по элементу: {elementName}")
     public void click(String elementName) throws FrameworkException{
         ExceptionThrow.elementActionException("Двойной клик", elementName, () -> {
-            mouseAdapter.clickElement(elementName);
+            getAdapter().clickElement(elementName);
             log.info("Выполнен клик по элементу: {}", elementName);
         });
     }
@@ -40,7 +40,7 @@ public class MouseSteps {
     @Step("Двойной клик по элементу: {elementName}")
     public void doubleClick(String elementName) throws FrameworkException{
         ExceptionThrow.elementActionException("Двойной клик", elementName, () -> {
-            mouseAdapter.doubleClickElement(elementName);
+            getAdapter().doubleClickElement(elementName);
             log.info("Выполнен двойной клик по элементу: {}", elementName);
         });
     }
@@ -49,7 +49,7 @@ public class MouseSteps {
     @Step("Правый клик по элементу: {elementName}")
     public void rightClick(String elementName) throws FrameworkException{
         ExceptionThrow.elementActionException("Двойной клик", elementName, () -> {
-            mouseAdapter.rightClickElement(elementName);
+            getAdapter().rightClickElement(elementName);
             log.info("Выполнен правый клик по элементу: {}", elementName);
         });
     }

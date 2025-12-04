@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
-
 public class ScreenshotListener implements ITestListener {
 
     private static final Logger log = Log.get(ScreenshotListener.class);
@@ -25,7 +24,6 @@ public class ScreenshotListener implements ITestListener {
         }
     }
 
-    // остальные методы интерфейса можно оставить пустыми
     @Override public void onTestStart(ITestResult result) { }
     @Override public void onTestSuccess(ITestResult result) { }
     @Override public void onTestSkipped(ITestResult result) { }

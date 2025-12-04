@@ -5,7 +5,6 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.model.Status;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.util.ResultsUtils;
-
 import java.util.UUID;
 
 public class CucumberAllureScenarioLifecycle {
@@ -25,7 +24,6 @@ public class CucumberAllureScenarioLifecycle {
         result.setFullName(scenario.getId());
         result.setHistoryId(scenario.getId());
 
-        // Добавим теги как labels
         scenario.getSourceTagNames()
                 .forEach(tag -> result.getLabels().add(ResultsUtils.createLabel("tag", tag)));
 

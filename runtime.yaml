@@ -23,15 +23,19 @@ ui_engine: selenium
 
 # Количество повторных запусков упавшего теста
 retry:
-  count: 1
+  count: 0
 
-pages_dir: "src/test/resources/pages"
+pages_dir: "Workspace/src/test/resources/pages"
 
-testData_dir: "src/test/resources/testData"
+testData_dir: "Workspace/src/test/resources/testData"
+
+logback_config: Workspace/src/test/resources/logback.xml
 
 cucumber_settings:
+  parallel: true
+  threads: 5
   # варианты: tag | scenario
   # можно указывать через запятую в кавычках - "Тест двойного клика, Тест правого клика"
-  run_by: tag
-  value: "@smoke"
+  run_by: scenario
+  value: "Тест двойного клика"
 

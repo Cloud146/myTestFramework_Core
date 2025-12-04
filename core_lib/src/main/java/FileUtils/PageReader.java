@@ -70,15 +70,14 @@ public class PageReader {
      */
     public static PageReader usePageYAML(String pageName) {
         String baseDirStr = RuntimeReader.getString("pages_dir");
+        if (baseDirStr == null || baseDirStr.isBlank()) {
+            throw new IllegalStateException("runtime.yaml: missing 'pages_dir'");
+        }
+        Path baseDir = PathResolver.resolve(baseDirStr);
 
         log.trace("Директория файлов с описанием страниц: {}", baseDirStr);
         log.trace("Полный путь к папке с файлами описания страниц: {}", Paths.get(baseDirStr).toAbsolutePath());
         log.trace("Используется страница YAML: {}", pageName);
-
-        if (baseDirStr == null || baseDirStr.isBlank()) {
-            throw new IllegalStateException("runtime.yaml: missing 'pages_dir'");
-        }
-        Path baseDir = Paths.get(baseDirStr);
 
         try (Stream<Path> files = Files.walk(baseDir)) {
             List<File> matches = files
@@ -97,14 +96,14 @@ public class PageReader {
                     .collect(Collectors.toList());
 
             if (matches.isEmpty()) {
-                throw new IllegalStateException("Page not found by name: " + pageName);
+                throw new IllegalStateException("Не найдена страница с именем: " + pageName);
             }
             if (matches.size() > 1) {
-                throw new IllegalStateException("Multiple pages found by name: " + pageName);
+                throw new IllegalStateException("Найдено несколько страниц с именем: " + pageName);
             }
             return new PageReader(matches.get(0));
         } catch (IOException e) {
-            throw new RuntimeException("Error searching pages directory", e);
+            throw new RuntimeException("Ошибка обнаружения директории страниц", e);
         }
     }
 

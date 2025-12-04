@@ -6,8 +6,6 @@ import logging.Log;
 import org.slf4j.Logger;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
-
-
 import java.util.Map;
 
 public class RetryAnalyzer implements IRetryAnalyzer {

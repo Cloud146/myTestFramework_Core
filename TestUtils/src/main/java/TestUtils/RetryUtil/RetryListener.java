@@ -19,7 +19,7 @@ public class RetryListener implements IAnnotationTransformer {
     @Override
     public void transform(ITestAnnotation annotation, Class testClass,
                           Constructor testConstructor, Method testMethod) {
-        log.debug("transform called for: {}", testMethod);
+//        log.debug("transform called for: {}", testMethod);
         annotation.setRetryAnalyzer(RetryAnalyzer.class);
     }
 }

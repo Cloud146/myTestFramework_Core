@@ -4,7 +4,6 @@ import config.RuntimeReader;
 import io.cucumber.tagexpressions.TagExpressionParser;
 import logging.Log;
 import org.slf4j.Logger;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -16,14 +15,22 @@ public final class CucumberRuntimeConfig {
     private static final String KEY_RUN_BY = "run_by";
     private static final String KEY_VALUE = "value";
 
+    private static final String KEY_PARALLEL = "parallel";
+    private static final String KEY_THREADS = "threads";
+
     private final String runBy;
     private final List<String> values;
 
+    private final boolean parallel;
+    private final int threads;
+
     private static final Logger log = Log.get(CucumberRuntimeConfig.class);
 
-    private CucumberRuntimeConfig(String runBy, List<String> values) {
+    private CucumberRuntimeConfig(String runBy, List<String> values, boolean parallel, int threads) {
         this.runBy = runBy;
         this.values = values;
+        this.parallel = parallel;
+        this.threads = threads;
     }
 
     public static CucumberRuntimeConfig load() {
@@ -35,7 +42,12 @@ public final class CucumberRuntimeConfig {
         String runBy = readRunBy(config);
         List<String> values = readValues(config);
 
-        return new CucumberRuntimeConfig(runBy, values);
+        boolean parallel = Boolean.parseBoolean(String.valueOf(config.getOrDefault(KEY_PARALLEL, "false")));
+
+        int defaultThreads = parallel ? 4 : 1;
+        int threads = Integer.parseInt(String.valueOf(config.getOrDefault(KEY_THREADS, defaultThreads)));
+
+        return new CucumberRuntimeConfig(runBy, values, parallel, threads);
     }
 
     // --- отдельный метод для чтения run_by
@@ -103,5 +115,8 @@ public final class CucumberRuntimeConfig {
     public List<String> getValues() {
         return values;
     }
+
+    public boolean isParallel() { return parallel; }
+    public int getThreads() { return threads; }
 }
 

@@ -1,8 +1,9 @@
 package FileUtils;
 
 import config.RuntimeReader;
+import logging.Log;
+import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -19,14 +20,15 @@ import java.util.*;
  */
 public final class TestDataService {
 
+    private static final Logger log = Log.get(TestDataService.class);
+
     private static final String DEFAULT_TESTDATA_DIR = "src/test/resources/testData";
     private static final String KEY_SCENARIO = "Сценарий";
     private static final String KEY_DATA = "Тестовые данные";
-    private static final String KEY_TYPE = "тип";
-    private static final String KEY_VALUE = "значение";
 
     private static final ThreadLocal<String> CURRENT_SCENARIO = new ThreadLocal<>();
-    private static volatile Map<String, Map<String, Map<String, Object>>> index = Collections.emptyMap(); // scenarioName -> (key -> itemMap)
+
+    private static volatile Map<String, Map<String, Object>> index = Collections.emptyMap();
     private static volatile boolean initialized = false;
 
     private TestDataService() {}
@@ -39,8 +41,13 @@ public final class TestDataService {
     public static synchronized void initIfNeeded() {
         if (initialized) return;
         String testDataDir = getTestDataDir();
-        index = buildIndex(Paths.get(testDataDir));
+        Path absolutePath = PathResolver.resolve(testDataDir);
+        log.debug("Инициализация тестовых данных. Путь из конфига: '{}'. Абсолютный путь: '{}'", testDataDir, absolutePath);
+
+        index = buildIndex(absolutePath); // Передаем absolutePath
         initialized = true;
+
+        log.debug("Загружено сценариев с данными: {}", index.keySet());
     }
 
     /**
@@ -52,7 +59,10 @@ public final class TestDataService {
         if (scenarioName == null || scenarioName.isBlank()) {
             throw new IllegalArgumentException("scenarioName must not be null or blank");
         }
-        CURRENT_SCENARIO.set(scenarioName);
+        String cleanName = scenarioName.trim();
+        CURRENT_SCENARIO.set(cleanName);
+
+        log.debug("Установлен контекст сценария: [{}]", cleanName);
     }
 
     /**
@@ -63,138 +73,86 @@ public final class TestDataService {
     }
 
     /**
-     * Возвращает значение поля "значение" для ключа из блока "Тестовые данные",
-     * основываясь на текущем установленном имени сценария.
-     *
-     * Пример: value("DoubleClickMessage") -> "You have done a double click".
-     *
-     * @param key ключ внутри "Тестовые данные"
-     * @return строковое значение или null, если ключ отсутствует
+     * Получить значение по ключу для текущего сценария.
      */
-    public static String value(String key) {
-        Map<String, Map<String, Object>> map = findScenarioDataOrThrow();
-        Map<String, Object> item = map.get(key);
-        if (item == null) return null;
-        Object v = item.get(KEY_VALUE);
-        return v == null ? null : String.valueOf(v);
-    }
+    public static Object get(String key) {
+        Map<String, Object> scenarioData = findScenarioDataOrThrow();
 
-    /**
-     * Возвращает карту элемента данных для ключа (тип, значение), если нужно читать и тип.
-     *
-     * @param key ключ внутри "Тестовые данные"
-     * @return неизменяемая карта с полями "тип" и "значение", или пустая карта, если ключ не найден
-     */
-    public static Map<String, Object> item(String key) {
-        Map<String, Map<String, Object>> map = findScenarioDataOrThrow();
-        Map<String, Object> item = map.getOrDefault(key, Collections.emptyMap());
-        return Collections.unmodifiableMap(item);
-    }
+        if (!scenarioData.containsKey(key)) {
+            throw new IllegalStateException(String.format(
+                    "Ключ '%s' не найден в данных сценария '%s'. Доступные ключи: %s",
+                    key, CURRENT_SCENARIO.get(), scenarioData.keySet()
+            ));
+        }
 
-    // ---------------- internals ----------------
+        return scenarioData.get(key);
+    }
 
     private static String getTestDataDir() {
-        // Берём из runtime.properties через твою утилиту
         String dir = RuntimeReader.getString("testData_dir");
         return (dir == null || dir.isBlank()) ? DEFAULT_TESTDATA_DIR : dir;
     }
 
-//    private static Map<String, Map<String, Map<String, Object>>> buildIndex(Path root) {
-//        Map<String, Map<String, Map<String, Object>>> out = new LinkedHashMap<>();
-//        if (!Files.exists(root) || !Files.isDirectory(root)) return out;
-//        try {
-//            try (var stream = Files.walk(root)) {
-//                stream.filter(p -> p.getFileName().toString().endsWith(".yaml"))
-//                        .forEach(p -> {
-//                            Map<String, Object> doc = loadYaml(p.toFile());
-//                            Object scenarioObj = doc.get(KEY_SCENARIO);
-//                            Object dataObj = doc.get(KEY_DATA);
-//                            if (!(scenarioObj instanceof String) || !(dataObj instanceof Map)) return;
-//                            @SuppressWarnings("unchecked")
-//                            Map<String, Map<String, Object>> dataMap = (Map<String, Map<String, Object>>) dataObj;
-//                            out.put((String) scenarioObj, dataMap);
-//                        });
-//            }
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to build test data index from: " + root, e);
-//        }
-//        return out;
-//    }
+    private static Map<String, Map<String, Object>> buildIndex(Path root) {
+        Map<String, Map<String, Object>> out = new LinkedHashMap<>();
 
-    private static Map<String, Map<String, Map<String, Object>>> buildIndex(Path root) {
-        Map<String, Map<String, Map<String, Object>>> out = new LinkedHashMap<>();
-        if (!Files.exists(root) || !Files.isDirectory(root)) return out;
-        try {
-            try (var stream = Files.walk(root)) {
-                stream.filter(p -> p.getFileName().toString().endsWith(".yaml"))
-                        .forEach(p -> {
-                            Object rootObj = loadYaml(p.toFile());
+        if (!Files.exists(root)) {
+            log.error("Папка с данными не существует по пути: {}", root.toAbsolutePath());
+            return out;
+        }
+        if (!Files.isDirectory(root)) {
+            log.error("Это не директория: {}", root.toAbsolutePath());
+            return out;
+        }
 
-                            // --- NEW: поддержка списка сценариев
-                            if (rootObj instanceof List) {
-                                @SuppressWarnings("unchecked")
-                                List<Map<String, Object>> list = (List<Map<String, Object>>) rootObj;
-                                for (Map<String, Object> entry : list) {
-                                    Object scenarioObj = entry.get(KEY_SCENARIO);
-                                    Object dataObj = entry.get(KEY_DATA);
-                                    if (scenarioObj instanceof String && dataObj instanceof Map) {
-                                        @SuppressWarnings("unchecked")
-                                        Map<String, Map<String, Object>> dataMap = (Map<String, Map<String, Object>>) dataObj;
-                                        out.put((String) scenarioObj, dataMap);
-                                    }
-                                }
-                            }
-                            // --- OLD: поддержка одиночного сценария (оставляем для обратной совместимости)
-                            else if (rootObj instanceof Map) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Object> doc = (Map<String, Object>) rootObj;
-                                Object scenarioObj = doc.get(KEY_SCENARIO);
-                                Object dataObj = doc.get(KEY_DATA);
-                                if (scenarioObj instanceof String && dataObj instanceof Map) {
-                                    @SuppressWarnings("unchecked")
-                                    Map<String, Map<String, Object>> dataMap = (Map<String, Map<String, Object>>) dataObj;
-                                    out.put((String) scenarioObj, dataMap);
-                                }
-                            }
-                        });
-            }
+        try (var stream = Files.walk(root)) {
+            stream.filter(p -> p.toString().endsWith(".yaml"))
+                    .forEach(p -> processYamlFile(p.toFile(), out));
         } catch (Exception e) {
             throw new RuntimeException("Failed to build test data index from: " + root, e);
         }
         return out;
     }
 
-//    private static Map<String, Object> loadYaml(File file) {
-//        try (InputStream is = new FileInputStream(file)) {
-//            Object root = new Yaml().load(is);
-//            if (!(root instanceof Map)) {
-//                throw new IllegalStateException("YAML must be mapping at root: " + file.getPath());
-//            }
-//            @SuppressWarnings("unchecked")
-//            Map<String, Object> m = (Map<String, Object>) root;
-//            return m;
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to read YAML: " + file.getPath(), e);
-//        }
-//    }
-
-    private static Object loadYaml(File file) {
+    @SuppressWarnings("unchecked")
+    private static void processYamlFile(File file, Map<String, Map<String, Object>> out) {
         try (InputStream is = new FileInputStream(file)) {
-            return new Yaml().load(is); // --- NEW: возвращаем Object, не приводим сразу к Map
+            Object rootObj = new Yaml().load(is);
+
+            if (rootObj instanceof List) {
+                List<Map<String, Object>> list = (List<Map<String, Object>>) rootObj;
+                for (Map<String, Object> entry : list) {
+                    parseEntry(entry, out);
+                }
+            }
+            else if (rootObj instanceof Map) {
+                parseEntry((Map<String, Object>) rootObj, out);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to read YAML: " + file.getPath(), e);
         }
     }
 
-    private static Map<String, Map<String, Object>> findScenarioDataOrThrow() {
+    @SuppressWarnings("unchecked")
+    private static void parseEntry(Map<String, Object> entry, Map<String, Map<String, Object>> out) {
+        Object scenarioObj = entry.get(KEY_SCENARIO);
+        Object dataObj = entry.get(KEY_DATA);
+
+        if (scenarioObj instanceof String && dataObj instanceof Map) {
+            String scenarioName = ((String) scenarioObj).trim(); // Убираем пробелы из YAML
+            out.put(scenarioName, (Map<String, Object>) dataObj);
+        }
+    }
+
+    private static Map<String, Object> findScenarioDataOrThrow() {
         initIfNeeded();
         String name = CURRENT_SCENARIO.get();
-        if (name == null || name.isBlank()) {
-            throw new IllegalStateException("Current scenario name is not set. Call TestDataService.setCurrentScenario(...) in setup.");
-        }
-        Map<String, Map<String, Object>> data = index.get(name);
+        if (name == null) throw new IllegalStateException("Current scenario not set");
+
+        Map<String, Object> data = index.get(name);
         if (data == null) {
-            throw new IllegalStateException("No test data found for scenario: " + name);
+            log.warn("Внимание: Для сценария [{}] не найдено тестовых данных в YAML файлах.", name);
+            return Collections.emptyMap();
         }
         return data;
     }

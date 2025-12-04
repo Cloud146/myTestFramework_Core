@@ -15,8 +15,12 @@
 <logger name="org.openqa.selenium.devtools" level="ERROR"/>
 <logger name="org.openqa.selenium.chromium" level="ERROR"/>
 <logger name="org.testng.internal.Graph" level="INFO"/>
+<logger name="io.qameta.allure" level="OFF" />
+<!-- <logger name="io.cucumber.core" level="WARN" /> -->
 
 <root level="INFO">
+<!--<root level="DEBUG">-->
+<!--<root level="TRACE">-->
     <appender-ref ref="STDOUT" />
 </root>
 

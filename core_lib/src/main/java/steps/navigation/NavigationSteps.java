@@ -12,23 +12,20 @@ import org.slf4j.Logger;
 
 public class NavigationSteps {
 
-    private final NavigationAdapter navigationAdapter;
     private static final Logger log = Log.get(NavigationSteps.class);
 
-    // Конструктор для Cucumber
-    public NavigationSteps() {
-        this.navigationAdapter = AdapterHolder.get();
-    }
+    public NavigationSteps() {}
 
-    // Конструктор для Java-тестов
-    public NavigationSteps(NavigationAdapter navigationAdapter) {
-        this.navigationAdapter = navigationAdapter;
+    public NavigationSteps(NavigationAdapter ignored) {}
+
+    private NavigationAdapter getAdapter() {
+        return AdapterHolder.get();
     }
 
     @И("Перейти по url «(.+)»$")
     @Step("Переход по url: {url}")
     public void openURL(String url){
-        navigationAdapter.openURL(url);
+        getAdapter().openURL(url);
         log.info("Выполнен переход по url: {}", url);
     }
 

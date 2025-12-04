@@ -33,8 +33,38 @@ public final class RuntimeReader {
      */
     private static void loadRuntimeYaml() {
         try {
-            String rootDir = System.getProperty("user.dir");
-            File file = new File(new File(rootDir).getParentFile(), "runtime.yaml");
+            File file = null;
+
+            // 1. Если явно передан путь через VM options
+            String customPath = System.getProperty("runtime.path");
+            if (customPath != null) {
+                file = new File(customPath);
+            }
+
+            // 2. Если нет — пробуем искать в текущей директории
+            if (file == null || !file.exists()) {
+                file = new File("runtime.yaml");
+            }
+
+            // 3. Если не нашли — пробуем на уровень выше
+            if (!file.exists()) {
+                String rootDir = System.getProperty("user.dir");
+                file = new File(new File(rootDir).getParentFile(), "runtime.yaml");
+            }
+
+            // 4. Если всё ещё не нашли — пробуем classpath
+            if (!file.exists()) {
+                try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("runtime.yaml")) {
+                    if (is != null) {
+                        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+                        Map<String, Object> loaded = yaml.load(is);
+                        if (loaded != null) {
+                            runtimeConfig.putAll(loaded);
+                        }
+                        return;
+                    }
+                }
+            }
 
             if (!file.exists()) {
                 throw new RuntimeException("Файл runtime.yaml не найден: " + file.getAbsolutePath());
@@ -54,9 +84,6 @@ public final class RuntimeReader {
 
     /**
      * Возвращает значение по ключу в виде строки.
-     *
-     * @param key имя ключа верхнего уровня в runtime.yaml
-     * @return строковое значение или null, если ключ отсутствует
      */
     public static String getString(String key) {
         Object value = runtimeConfig.get(key);
@@ -65,10 +92,6 @@ public final class RuntimeReader {
 
     /**
      * Возвращает значение по ключу в виде int.
-     *
-     * @param key имя ключа верхнего уровня в runtime.yaml
-     * @return числовое значение или 0, если ключ отсутствует
-     * @throws NumberFormatException если значение не может быть преобразовано в число
      */
     public static int getInt(String key) {
         Object value = runtimeConfig.get(key);
@@ -77,9 +100,6 @@ public final class RuntimeReader {
 
     /**
      * Возвращает значение по ключу в виде boolean.
-     *
-     * @param key имя ключа верхнего уровня в runtime.yaml
-     * @return true, если значение равно "true" (регистр не важен), иначе false
      */
     public static boolean getBoolean(String key) {
         Object value = runtimeConfig.get(key);
@@ -88,17 +108,6 @@ public final class RuntimeReader {
 
     /**
      * Возвращает вложенную секцию (Map) по ключу.
-     * <p>
-     * Например, если в YAML есть:
-     * <pre>
-     * timeouts:
-     *   implicit: 5
-     *   explicit: 15
-     * </pre>
-     * то вызов getSection("timeouts") вернёт Map {implicit=5, explicit=15}.
-     *
-     * @param key имя секции
-     * @return Map с содержимым секции или пустая Map, если секция отсутствует
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> getSection(String key) {
@@ -111,17 +120,6 @@ public final class RuntimeReader {
 
     /**
      * Возвращает список строк по ключу.
-     * <p>
-     * Например, если в YAML есть:
-     * <pre>
-     * modules:
-     *   - selenium
-     *   - rest
-     * </pre>
-     * то вызов getList("modules") вернёт List ["selenium", "rest"].
-     *
-     * @param key имя ключа
-     * @return список строк или пустой список, если ключ отсутствует или не является списком
      */
     @SuppressWarnings("unchecked")
     public static List<String> getList(String key) {
@@ -136,12 +134,6 @@ public final class RuntimeReader {
 
     /**
      * Загружает YAML-конфиг конкретного модуля из classpath.
-     * <p>
-     * Ищет файл {moduleName}.yaml в resources.
-     * Например, getModuleConfig("selenium") загрузит selenium.yaml.
-     *
-     * @param moduleName имя модуля (без расширения)
-     * @return Map с настройками модуля или пустая Map, если файл не найден
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> getModuleConfig(String moduleName) {
