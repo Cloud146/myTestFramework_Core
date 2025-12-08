@@ -3,9 +3,6 @@ package config;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
 
@@ -21,6 +18,11 @@ public final class RuntimeReader {
 
     private static final Map<String, Object> runtimeConfig = new HashMap<>();
 
+    private static final String[] SEARCH_PATHS = {
+            "configuration_files/runtime.yaml",
+            "runtime.yaml"
+    };
+
     static {
         loadRuntimeYaml();
     }
@@ -32,54 +34,23 @@ public final class RuntimeReader {
      * Если файл отсутствует или не удаётся прочитать, выбрасывает RuntimeException.
      */
     private static void loadRuntimeYaml() {
-        try {
-            File file = null;
-
-            // 1. Если явно передан путь через VM options
-            String customPath = System.getProperty("runtime.path");
-            if (customPath != null) {
-                file = new File(customPath);
-            }
-
-            // 2. Если нет — пробуем искать в текущей директории
-            if (file == null || !file.exists()) {
-                file = new File("runtime.yaml");
-            }
-
-            // 3. Если не нашли — пробуем на уровень выше
-            if (!file.exists()) {
-                String rootDir = System.getProperty("user.dir");
-                file = new File(new File(rootDir).getParentFile(), "runtime.yaml");
-            }
-
-            // 4. Если всё ещё не нашли — пробуем classpath
-            if (!file.exists()) {
-                try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("runtime.yaml")) {
-                    if (is != null) {
-                        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-                        Map<String, Object> loaded = yaml.load(is);
-                        if (loaded != null) {
-                            runtimeConfig.putAll(loaded);
-                        }
-                        return;
+        for (String path : SEARCH_PATHS) {
+            try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path)) {
+                if (is != null) {
+                    Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+                    Map<String, Object> loaded = yaml.load(is);
+                    if (loaded != null) {
+                        runtimeConfig.putAll(loaded);
                     }
+                    return;
                 }
+            } catch (Exception e) {
+                System.err.printf("[RuntimeReader] Error parsing YAML '%s': %s%n", path, e.getMessage());
             }
-
-            if (!file.exists()) {
-                throw new RuntimeException("Файл runtime.yaml не найден: " + file.getAbsolutePath());
-            }
-
-            try (FileInputStream fis = new FileInputStream(file)) {
-                Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-                Map<String, Object> loaded = yaml.load(fis);
-                if (loaded != null) {
-                    runtimeConfig.putAll(loaded);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка загрузки runtime.yaml", e);
         }
+
+        System.err.println("[RuntimeReader] Config 'runtime.yaml' not found in classpath. Searched paths: "
+                + Arrays.toString(SEARCH_PATHS));
     }
 
     /**

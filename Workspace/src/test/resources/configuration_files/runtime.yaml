@@ -25,17 +25,17 @@ ui_engine: selenium
 retry:
   count: 0
 
-pages_dir: "Workspace/src/test/resources/pages"
+pages_dir: "pages"
 
-testData_dir: "Workspace/src/test/resources/testData"
+testData_dir: "testData"
 
-logback_config: Workspace/src/test/resources/logback.xml
+logback_config: logback.xml
 
 cucumber_settings:
   parallel: true
   threads: 5
   # варианты: tag | scenario
   # можно указывать через запятую в кавычках - "Тест двойного клика, Тест правого клика"
-  run_by: scenario
-  value: "Тест двойного клика"
+  run_by: tag
+  value: "@regress"
 

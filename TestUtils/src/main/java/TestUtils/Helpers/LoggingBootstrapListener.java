@@ -8,11 +8,10 @@ import org.testng.ITestNGListener;
 
 public class LoggingBootstrapListener implements ITestNGListener {
 
-    private static final Logger log = Log.get(LogbackConfigurator.class);
-
     static {
         LogbackConfigurator.initFromRuntime();
         JulBridge.init();
-        log.debug("[LoggingBootstrapListener] static init");
+        Logger log = Log.get(LoggingBootstrapListener.class);
+        log.debug("[LoggingBootstrapListener] static init completed");
     }
 }
