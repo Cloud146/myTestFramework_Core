@@ -30,7 +30,7 @@ public class MouseSteps {
     @И("Клик по элементу «(.+)»$")
     @Step("Клик по элементу: {elementName}")
     public void click(String elementName) throws FrameworkException{
-        ExceptionThrow.elementActionException("Двойной клик", elementName, () -> {
+        ExceptionThrow.elementActionException("Клик", elementName, () -> {
             getAdapter().clickElement(elementName);
             log.info("Выполнен клик по элементу: {}", elementName);
         });
@@ -48,7 +48,7 @@ public class MouseSteps {
     @И("Правый клик по элементу «(.+)»$")
     @Step("Правый клик по элементу: {elementName}")
     public void rightClick(String elementName) throws FrameworkException{
-        ExceptionThrow.elementActionException("Двойной клик", elementName, () -> {
+        ExceptionThrow.elementActionException("Правый клик", elementName, () -> {
             getAdapter().rightClickElement(elementName);
             log.info("Выполнен правый клик по элементу: {}", elementName);
         });

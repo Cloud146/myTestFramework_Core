@@ -119,4 +119,3 @@ public final class CucumberRuntimeConfig {
     public boolean isParallel() { return parallel; }
     public int getThreads() { return threads; }
 }
-

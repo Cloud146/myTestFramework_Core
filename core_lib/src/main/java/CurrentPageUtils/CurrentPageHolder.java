@@ -18,7 +18,6 @@ public final class CurrentPageHolder {
         this.currentPage.set(page);
     }
 
-    // НОВОЕ: Нужно для очистки памяти после теста
     public void remove() {
         this.currentPage.remove();
     }

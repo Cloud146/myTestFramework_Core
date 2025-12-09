@@ -10,7 +10,6 @@ import config.RuntimeReader;
 import driverAdapter.AdapterHolder;
 import driverAdapter.DriverAdapter;
 import FileUtils.PageReader;
-import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import logging.Log;
 import org.slf4j.Logger;

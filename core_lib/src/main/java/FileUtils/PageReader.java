@@ -16,18 +16,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Утилитарный класс для работы с уже загруженной YAML-страницей.
  *
- * Поиск и загрузка страниц основаны на имени из PageInfo.name и каталоге, указанном в runtime.yaml (ключ "pages_dir").
- * Класс предоставляет удобные геттеры для использования в тестах и в Allure Utils:
- * - getPageName(), getPageUrl(), getProject(), getFeature(), getPagePath()
- * - getElementDefinition(name), getLocator(name), getSemanticType(name)
- *
- * Исключения бросаются заранее при некорректной конфигурации (отсутствует PageInfo, отсутствует url или нет элементов).
  */
 public class PageReader {
 
@@ -40,12 +35,19 @@ public class PageReader {
 
     private static final Logger log = Log.get(PageReader.class);
 
+    // --- НОВОЕ: Кэш страниц (Нормализованное имя -> Файл) ---
+    private static final Map<String, File> PAGE_CACHE = new ConcurrentHashMap<>();
+    // Флаг инициализации
+    private static volatile boolean cacheInitialized = false;
+    // Объект для синхронизации при инициализации
+    private static final Object LOCK = new Object();
+
     private PageReader(File yamlFile) {
         this.pagePath = yamlFile.getAbsolutePath();
         PageModel model = new YamlPageLoader().load(yamlFile);
 
         if (model.getPageInfo() == null) {
-            throw new IllegalStateException("Missing PageInfo in: " + pagePath);
+            throw new IllegalStateException("PageInfo не найдено по пути: " + pagePath);
         }
         this.pageName = model.getPageInfo().getName();
         this.pageUrl  = model.getPageInfo().getUrl();
@@ -53,57 +55,83 @@ public class PageReader {
         this.feature  = model.getPageInfo().getFeature();
 
         if (pageUrl == null || pageUrl.isBlank()) {
-            throw new IllegalStateException("Missing PageInfo.url in: " + pagePath);
+            throw new IllegalStateException("PageInfo.url  не найдено по пути: " + pagePath);
         }
 
         this.elements = Optional.ofNullable(model.getElements()).orElseGet(Collections::emptyMap);
         if (elements.isEmpty()) {
-            throw new IllegalStateException("No elements defined in: " + pagePath);
+            throw new IllegalStateException("Нет доступных элементов по пути: " + pagePath);
         }
     }
 
     /**
-     * Найти страницу по PageInfo.name в каталоге из runtime.yaml (ключ "pages_dir").
-     *
-     * @param pageName значение PageInfo.name в YAML (поиск нечувствителен к регистру и пробелам)
-     * @return PageReader для найденной страницы
+     * Найти страницу по PageInfo.name.
+     * Теперь использует кэширование: сканирует диск только 1 раз.
      */
     public static PageReader usePageYAML(String pageName) {
+        if (!cacheInitialized) {
+            synchronized (LOCK) {
+                if (!cacheInitialized) {
+                    initPageCache();
+                    cacheInitialized = true;
+                }
+            }
+        }
+
+        String normalizedName = normalize(pageName);
+        File file = PAGE_CACHE.get(normalizedName);
+
+        if (file == null) {
+            throw new IllegalStateException("Не найдена страница с именем: '" + pageName + "' (искали в кэше по ключу: '" + normalizedName + "')");
+        }
+
+        log.trace("Используется страница YAML: {} (файл: {})", pageName, file.getName());
+        return new PageReader(file);
+    }
+
+    /**
+     * Метод сканирует директорию один раз и заполняет PAGE_CACHE
+     */
+    private static void initPageCache() {
         String baseDirStr = RuntimeReader.getString("pages_dir");
         if (baseDirStr == null || baseDirStr.isBlank()) {
             throw new IllegalStateException("runtime.yaml: missing 'pages_dir'");
         }
         Path baseDir = PathResolver.resolve(baseDirStr);
 
-        log.trace("Директория файлов с описанием страниц: {}", baseDirStr);
-        log.trace("Полный путь к папке с файлами описания страниц: {}", Paths.get(baseDirStr).toAbsolutePath());
-        log.trace("Используется страница YAML: {}", pageName);
+        log.debug("Инициализация кэша страниц. Сканирование директории: {}", baseDir.toAbsolutePath());
 
         try (Stream<Path> files = Files.walk(baseDir)) {
-            List<File> matches = files
-                    .filter(Files::isRegularFile)
+            files.filter(Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".yaml") || p.toString().endsWith(".yml"))
-                    .map(Path::toFile)
-                    .filter(f -> {
+                    .forEach(path -> {
                         try {
-                            PageModel m = new YamlPageLoader().load(f);
-                            return m.getPageInfo() != null &&
-                                    normalize(m.getPageInfo().getName()).equals(normalize(pageName));
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    })
-                    .collect(Collectors.toList());
+                            // Пробуем загрузить модель, чтобы достать имя
+                            PageModel m = new YamlPageLoader().load(path.toFile());
+                            if (m.getPageInfo() != null && m.getPageInfo().getName() != null) {
+                                String key = normalize(m.getPageInfo().getName());
 
-            if (matches.isEmpty()) {
-                throw new IllegalStateException("Не найдена страница с именем: " + pageName);
-            }
-            if (matches.size() > 1) {
-                throw new IllegalStateException("Найдено несколько страниц с именем: " + pageName);
-            }
-            return new PageReader(matches.get(0));
+                                // Проверка на дубликаты
+                                if (PAGE_CACHE.containsKey(key)) {
+                                    File existing = PAGE_CACHE.get(key);
+                                    throw new IllegalStateException(String.format(
+                                            "Найдено несколько страниц с именем '%s':\n1) %s\n2) %s",
+                                            m.getPageInfo().getName(), existing.getAbsolutePath(), path.toAbsolutePath()
+                                    ));
+                                }
+
+                                PAGE_CACHE.put(key, path.toFile());
+                            }
+                        } catch (Exception e) {
+                            // Если файл битый или не похож на PageObject - просто логируем и пропускаем
+                            log.warn("Пропущен файл при сканировании страниц (ошибка парсинга): {} -> {}", path, e.getMessage());
+                        }
+                    });
+
+            log.debug("Кэширование завершено. Загружено страниц: {}", PAGE_CACHE.size());
+
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка обнаружения директории страниц", e);
+            throw new RuntimeException("Ошибка обнаружения директории страниц: " + baseDir, e);
         }
     }
 

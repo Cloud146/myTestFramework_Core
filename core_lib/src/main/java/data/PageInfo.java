@@ -56,5 +56,3 @@ public class PageInfo {
         this.url = url;
     }
 }
-
-

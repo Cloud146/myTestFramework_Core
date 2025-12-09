@@ -30,9 +30,8 @@ public class RetryAnalyzer implements IRetryAnalyzer {
                     "Перезапуск #%d из %d для теста %s",
                     attempt, maxRetries, result.getMethod().getMethodName()
             );
-//            System.out.println("[RETRY] " + message);
             log.info(message);
-            Allure.step(message); // шаг в отчёте
+            Allure.step(message);
             return true;
         }
         return false;
