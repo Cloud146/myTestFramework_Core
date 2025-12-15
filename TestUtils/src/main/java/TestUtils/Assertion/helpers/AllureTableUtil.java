@@ -23,14 +23,12 @@ public final class AllureTableUtil {
         sb.append("<h4>").append(name).append("</h4>");
         sb.append("<table>");
 
-        // Заголовок
         sb.append("<thead><tr>")
                 .append("<th>Элемент</th>")
                 .append("<th>Состояние</th>")
                 .append("<th>Значение</th>")
                 .append("</tr></thead>");
 
-        // Тело
         sb.append("<tbody>");
         for (AssertionEntry check : checks) {
             sb.append("<tr>")
@@ -75,9 +73,6 @@ public final class AllureTableUtil {
                 .replace("\"", "&quot;");
     }
 
-    /**
-     * Формирует красивый отчет об ошибках SoftAssertions.
-     */
     public static void attachAssertionFailure(List<String> errors) {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><head>").append(STYLE).append("</head><body>");
@@ -101,9 +96,6 @@ public final class AllureTableUtil {
         Allure.addAttachment("Список ошибок", "text/html", sb.toString(), ".html");
     }
 
-    /**
-     * Формирует таблицу несоответствий: Элемент | Состояние | Ожидалось | Фактически
-     */
     public static void attachAssertionFailureTable(List<AssertionFailure> failures) {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><head>").append(STYLE).append("</head><body>");

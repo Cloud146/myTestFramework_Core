@@ -11,35 +11,25 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Утилитарный класс для работы с уже загруженной YAML-страницей.
- *
- */
 public class PageReader {
 
     private final String project;
     private final String feature;
     private final String pageName;
     private final String pageUrl;
-    private final Map<String, ElementDefinition> elements;
     private final String pagePath;
 
     private static final Logger log = Log.get(PageReader.class);
 
-    // --- НОВОЕ: Кэш страниц (Нормализованное имя -> Файл) ---
+    private final Map<String, ElementDefinition> elements;
     private static final Map<String, File> PAGE_CACHE = new ConcurrentHashMap<>();
-    // Флаг инициализации
     private static volatile boolean cacheInitialized = false;
-    // Объект для синхронизации при инициализации
     private static final Object LOCK = new Object();
 
     private PageReader(File yamlFile) {
@@ -64,10 +54,6 @@ public class PageReader {
         }
     }
 
-    /**
-     * Найти страницу по PageInfo.name.
-     * Теперь использует кэширование: сканирует диск только 1 раз.
-     */
     public static PageReader usePageYAML(String pageName) {
         if (!cacheInitialized) {
             synchronized (LOCK) {
@@ -89,9 +75,6 @@ public class PageReader {
         return new PageReader(file);
     }
 
-    /**
-     * Метод сканирует директорию один раз и заполняет PAGE_CACHE
-     */
     private static void initPageCache() {
         String baseDirStr = RuntimeReader.getString("pages_dir");
         if (baseDirStr == null || baseDirStr.isBlank()) {
@@ -106,12 +89,10 @@ public class PageReader {
                     .filter(p -> p.toString().endsWith(".yaml") || p.toString().endsWith(".yml"))
                     .forEach(path -> {
                         try {
-                            // Пробуем загрузить модель, чтобы достать имя
                             PageModel m = new YamlPageLoader().load(path.toFile());
                             if (m.getPageInfo() != null && m.getPageInfo().getName() != null) {
                                 String key = normalize(m.getPageInfo().getName());
 
-                                // Проверка на дубликаты
                                 if (PAGE_CACHE.containsKey(key)) {
                                     File existing = PAGE_CACHE.get(key);
                                     throw new IllegalStateException(String.format(
@@ -123,7 +104,6 @@ public class PageReader {
                                 PAGE_CACHE.put(key, path.toFile());
                             }
                         } catch (Exception e) {
-                            // Если файл битый или не похож на PageObject - просто логируем и пропускаем
                             log.warn("Пропущен файл при сканировании страниц (ошибка парсинга): {} -> {}", path, e.getMessage());
                         }
                     });
@@ -135,32 +115,26 @@ public class PageReader {
         }
     }
 
-    /** Вернуть URL страницы из PageInfo.url */
     public String getPageUrl() {
         return pageUrl;
     }
 
-    /** Вернуть имя страницы из PageInfo.name */
     public String getPageName() {
         return pageName;
     }
 
-    /** Вернуть название проекта из PageInfo.project */
     public String getProject() {
         return project;
     }
 
-    /** Вернуть название фичи из PageInfo.feature */
     public String getFeature() {
         return feature;
     }
 
-    /** Вернуть путь к YAML-файлу на диске */
     public String getPagePath() {
         return pagePath;
     }
 
-    /** Вернуть определение элемента по ключу из elements */
     public ElementDefinition getElementDefinition(String name) {
         ElementDefinition def = elements.get(name);
         if (def == null) {
@@ -169,7 +143,6 @@ public class PageReader {
         return def;
     }
 
-    /** Вернуть универсальный локатор для элемента */
     public Locator getLocator(String name) {
         ElementDefinition def = getElementDefinition(name);
 
@@ -182,7 +155,6 @@ public class PageReader {
         return new Locator(def.toLocatorTypeEnum(), def.getLocatorValue());
     }
 
-    /** Опционально: вернуть семантику элемента (type), если нужна в тестах/логах */
     public String getSemanticType(String name) {
         ElementDefinition def = getElementDefinition(name);
         String t = def.getType();

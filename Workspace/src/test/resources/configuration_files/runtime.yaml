@@ -1,41 +1,21 @@
 # Глобальные настройки фреймворка
 
-# Список модулей, которые будут активированы в этом проекте.
-# Можно включать только те, что реально нужны.
-modules:
-  Selenium_module:
-    git_cmd: fetch
-    status: ON
-  # - selenium
-  # - rest
-  # - playwright
-  # - appium
-
-# Движок для UI-тестов
-# Возможные значения: selenium | playwright | appium
-# Если проект не использует UI-модули, оставляем null
 ui_engine: selenium
+# Возможные значения: chrome | firefox | edge
+browser: chrome
 
-## Общие таймауты (могут использоваться в разных модулях)
-#timeouts:
-#  implicit: 5      # implicit wait (секунды)
-#  explicit: 15     # explicit wait (секунды)
+pages_dir: "pages"
+testData_dir: "testData"
+logback_config: logback.xml
 
 # Количество повторных запусков упавшего теста
 retry:
   count: 0
 
-pages_dir: "pages"
-
-testData_dir: "testData"
-
-logback_config: logback.xml
-
 cucumber_settings:
   parallel: true
   threads: 5
-  # варианты: tag | scenario
-  # можно указывать через запятую в кавычках - "Тест двойного клика, Тест правого клика"
-  run_by: tag
-  value: "@regress"
+  # Возможные значения: scenario | tag
+  run_by: scenario
+  value: "Тест двойного клика"
 

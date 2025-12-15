@@ -20,13 +20,6 @@ import steps.interactions.MouseSteps;
 import steps.navigation.NavigationSteps;
 import java.lang.reflect.Method;
 
-/**
- * Базовый класс для всех тестов (UI, API, Mobile и т.д.).
- *
- * Отвечает за инициализацию данных и чтение глобальных настроек из runtime.yaml.
- * Если в конфиге указан ui_engine, то поднимается соответствующий адаптер.
- * Если ui_engine отсутствует, тесты работают без драйвера (например, REST).
- */
 public abstract class BaseTest {
 
     protected DriverAdapter adapter;

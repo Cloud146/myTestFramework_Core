@@ -13,14 +13,6 @@ public final class PathResolver {
 
     private PathResolver() {}
 
-    /**
-     * Пытается найти реальный путь к папке/файлу по строке из конфига.
-     * Стратегия поиска:
-     * 1. Абсолютный путь.
-     * 2. Относительно src/test/resources (для удобства в IDE).
-     * 3. Относительно user.dir (рабочей директории запуска).
-     * 4. Внутри Classpath (target/classes).
-     */
     public static Path resolve(String pathStr) {
         if (pathStr == null || pathStr.isBlank()) {
             throw new IllegalArgumentException("Путь не может быть пустым");

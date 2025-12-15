@@ -8,10 +8,6 @@ import driverAdapter.adapter_api_contracts.interaction.MouseAdapter;
 import driverAdapter.adapter_api_contracts.navigation.NavigationAdapter;
 import driverAdapter.adapter_api_contracts.waits.WaitAdapter;
 
-/**
- * Универсальный интерфейс для взаимодействия с элементами UI.
- * Реализуется конкретными адаптерами (Selenium, Playwright, Appium).
- */
 public interface DriverAdapter extends
         AlertAdapter,
         ElementStateAdapter,
@@ -22,6 +18,5 @@ public interface DriverAdapter extends
         WaitAdapter
 {
 
-    /** Закрыть драйвер/браузер/сессию. */
     void close();
 }

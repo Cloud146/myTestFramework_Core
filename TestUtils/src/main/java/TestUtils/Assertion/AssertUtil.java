@@ -49,10 +49,6 @@ public class AssertUtil {
         }
     }
 
-    /**
-     * Маппер для Cucumber. Превращает строку таблицы в объект AssertionEntry.
-     * Поддерживает русские заголовки столбцов.
-     */
     @DataTableType
     public AssertionEntry defineAssertionEntry(Map<String, String> entry) {
         return new AssertionEntry(
@@ -128,9 +124,6 @@ public class AssertUtil {
         });
     }
 
-    /**
-     * Строит подробное текстовое сообщение об ошибках для консоли/лога.
-     */
     private String buildFailureMessage(String description, List<AssertionFailure> failures) {
         StringBuilder sb = new StringBuilder();
         sb.append("Провалена проверка: '").append(description).append("'\n");

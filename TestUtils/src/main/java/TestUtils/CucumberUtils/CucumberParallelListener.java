@@ -6,10 +6,6 @@ import org.testng.IAlterSuiteListener;
 import org.testng.xml.XmlSuite;
 import java.util.List;
 
-/**
- * Слушатель, который настраивает параллельность DataProvider для Cucumber
- * на основе настроек из runtime.yaml.
- */
 public class CucumberParallelListener implements IAlterSuiteListener {
 
     private static final Logger log = Log.get(CucumberParallelListener.class);

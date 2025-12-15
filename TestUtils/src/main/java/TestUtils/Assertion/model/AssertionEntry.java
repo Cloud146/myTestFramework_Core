@@ -1,9 +1,5 @@
 package TestUtils.Assertion.model;
 
-/**
- * Класс, описывающий одну строку в таблице проверок Cucumber.
- * Столбцы: элемент, состояние, значение.
- */
 public class AssertionEntry {
     private String element;
     private String condition;

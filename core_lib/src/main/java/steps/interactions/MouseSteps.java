@@ -9,11 +9,6 @@ import io.qameta.allure.Step;
 import logging.Log;
 import org.slf4j.Logger;
 
-/**
- * Шаги для действий мышью.
- * Работают поверх MouseAdapter, чтобы в Allure были красивые шаги,
- * а реализация выбиралась в рантайме (Selenium, Playwright, Appium).
- */
 public class MouseSteps {
 
     private static final Logger log = Log.get(MouseSteps.class);

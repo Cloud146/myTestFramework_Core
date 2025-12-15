@@ -18,9 +18,6 @@ public class ScreenshotUtil {
 
     private ScreenshotUtil(){}
 
-    /**
-     * Снимает скриншот экрана и возвращает PNG как byte[].
-     */
     public static byte[] captureScreenPngBytes() {
         try {
             Robot robot = new Robot();
@@ -34,10 +31,6 @@ public class ScreenshotUtil {
         }
     }
 
-    /**
-     * Делает скриншот по явному вызову и прикрепляет к текущему тесту в Allure.
-     * Если тестовый контекст отсутствует, возвращает false и не кидает исключение.
-     */
     @И("Сделать скриншот экрана и назвать файл (.+)$")
     @Step("Скриншот экрана. Название файла скриншота: {screenshotName}")
     public static void takeScreenshot(String screenshotName) {
@@ -49,11 +42,6 @@ public class ScreenshotUtil {
         }
     }
 
-    /**
-     * Делает скриншот при падении теста и прикрепляет к нему.
-     * Всегда принимает ITestResult (можно вызывать из Listener).
-     * Возвращает true если attachment добавлен.
-     */
     @Step("Скриншот экрана при возникновении ошибки")
     public static boolean takeScreenshotOnFailure(ITestResult result) {
         if (result == null) return false;
@@ -67,10 +55,6 @@ public class ScreenshotUtil {
         }
     }
 
-    /**
-     * Helper: пытается корректно добавить attachment через AllureLifecycle.
-     * Возвращает true если добавлено.
-     */
     private static boolean attachToAllure(String name, byte[] png) {
         try {
             AllureLifecycle lifecycle = Allure.getLifecycle();

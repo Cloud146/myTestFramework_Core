@@ -9,9 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ParallelClass {
 
-    /**
-     * Количество потоков (threadPoolSize) для @Test методов в классе.
-     * По умолчанию 0 — означает "авто" (число методов или доступные CPU).
-     */
     int threads() default 0;
 }

@@ -10,14 +10,6 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 
-/**
- * TestDataService загружает YAML-файлы из каталога testData_dir и
- * предоставляет доступ к значениям по ключам на основе имени сценария/теста.
- *
- * Имя сценария приходит из:
- *  - Cucumber: Scenario.getName()
- *  - TestNG: @Test(description = "...") или @DisplayName (если используешь JUnit5)
- */
 public final class TestDataService {
 
     private static final Logger log = Log.get(TestDataService.class);
@@ -33,11 +25,6 @@ public final class TestDataService {
 
     private TestDataService() {}
 
-    /**
-     * Инициализирует индекс данных тестов, если ещё не был инициализирован.
-     * Вызывает рекурсивный обход каталога testData_dir и строит сопоставление:
-     * "Сценарий" -> карта ключей из "Тестовые данные".
-     */
     public static synchronized void initIfNeeded() {
         if (initialized) return;
         String testDataDir = getTestDataDir();
@@ -50,11 +37,6 @@ public final class TestDataService {
         log.debug("Загружено сценариев с данными: {}", index.keySet());
     }
 
-    /**
-     * Устанавливает текущее имя сценария/теста для обращений к данным.
-     *
-     * @param scenarioName имя сценария (Cucumber) или описание теста (TestNG description)
-     */
     public static void setCurrentScenario(String scenarioName) {
         if (scenarioName == null || scenarioName.isBlank()) {
             throw new IllegalArgumentException("scenarioName must not be null or blank");
@@ -65,16 +47,10 @@ public final class TestDataService {
         log.debug("Установлен контекст сценария: [{}]", cleanName);
     }
 
-    /**
-     * Сбрасывает текущее имя сценария (например, в teardown).
-     */
     public static void clearCurrentScenario() {
         CURRENT_SCENARIO.remove();
     }
 
-    /**
-     * Получить значение по ключу для текущего сценария.
-     */
     public static Object get(String key) {
         Map<String, Object> scenarioData = findScenarioDataOrThrow();
 

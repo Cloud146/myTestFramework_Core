@@ -1,0 +1,21 @@
+# Конфигурация Selenium-модуля для Chrome
+
+# Браузер для запуска тестов
+browser: chrome
+driverVersion: null
+driverPath: null
+binaryPath: null
+
+pageLoadStrategy: eager
+headless: false
+window:
+  mode: maximize
+
+# Дополнительные аргументы для браузера
+# Можно указывать список, каждый аргумент отдельной строкой
+args:
+  - --disable-extensions
+  - --disable-notifications
+  - --disable-infobars
+  - --disable-gpu
+  - --lang=ru

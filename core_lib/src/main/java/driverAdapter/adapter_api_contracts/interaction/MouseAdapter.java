@@ -1,8 +1,5 @@
 package driverAdapter.adapter_api_contracts.interaction;
 
-/**
- * Контракт для действий мышью
- */
 public interface MouseAdapter {
 
     void clickElement(String elementName);

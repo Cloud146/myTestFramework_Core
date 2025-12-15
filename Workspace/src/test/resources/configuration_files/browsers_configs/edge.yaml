@@ -1,0 +1,33 @@
+# Конфигурация Selenium-модуля для Microsoft Edge
+
+# Браузер для запуска тестов
+# Возможные значения: chrome | firefox | edge
+browser: edge
+driverVersion: null
+driverPath: null
+binaryPath: null
+
+pageLoadStrategy: eager
+headless: false
+window:
+  mode: maximize
+
+# Дополнительные аргументы для браузера
+# Можно указывать список, каждый аргумент отдельной строкой
+args:
+#  - --ignore-certificate-errors
+#  - --disable-popup-blocking
+#  - --remote-allow-origins=**
+  - --disable-extensions
+  - --disable-notifications
+  - --disable-infobars
+#  - --no-default-browser-check
+#  - --disable-first-run-ui
+#  - --disable-features=AutofillAssistant
+#  - --disable-features=TranslateUI
+#  - --disable-features=ChromeWhatsNewUI
+#  - --disable-features=ChromeTips
+#  - --no-first-run
+  - --disable-gpu
+  - --lang=ru
+  - --incognito

@@ -1,8 +1,5 @@
 package TestUtils.Assertion.model;
 
-/**
- * Модель, описывающая конкретное несовпадение в таблице.
- */
 public class AssertionFailure {
     private final String element;
     private final String condition;

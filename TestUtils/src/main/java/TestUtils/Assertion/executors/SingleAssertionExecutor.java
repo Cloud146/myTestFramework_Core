@@ -2,12 +2,8 @@ package TestUtils.Assertion.executors;
 
 import driverAdapter.AdapterHolder;
 import driverAdapter.DriverAdapter;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Логика для одиночных жестких проверок (Hard Assertions).
- */
 public class SingleAssertionExecutor {
 
     private DriverAdapter getAdapter() {

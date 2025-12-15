@@ -11,16 +11,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Логика для массовых мягких проверок (Soft Assertions).
- */
 public class TableAssertionExecutor {
 
     private DriverAdapter getAdapter() {
         return AdapterHolder.get();
     }
 
-    // --- Массовая проверка текста ---
     public void executeTableTextChecks(List<AssertionEntry> checks) {
         List<AssertionFailure> failures = new ArrayList<>();
 
@@ -60,7 +56,6 @@ public class TableAssertionExecutor {
         }
     }
 
-    // --- Массовая проверка состояний ---
     public void executeStateChecks(List<StateAssertionEntry> checks) {
         List<AssertionFailure> failures = new ArrayList<>();
 

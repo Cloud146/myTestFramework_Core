@@ -1,8 +1,5 @@
 package ErrorUtils;
 
-/**
- * Единый тип ошибок для шагов.
- */
 public class FrameworkException extends RuntimeException {
     private final String action;
     private final String selector;

@@ -50,7 +50,6 @@ public final class CucumberRuntimeConfig {
         return new CucumberRuntimeConfig(runBy, values, parallel, threads);
     }
 
-    // --- отдельный метод для чтения run_by
     private static String readRunBy(Map<String, Object> config) {
         Object raw = config.get(KEY_RUN_BY);
         if (!(raw instanceof String) || ((String) raw).isBlank()) {
@@ -59,7 +58,6 @@ public final class CucumberRuntimeConfig {
         return ((String) raw).trim().toLowerCase();
     }
 
-    // --- отдельный метод для чтения value
     private static String readValue(Map<String, Object> config) {
         Object raw = config.get(KEY_VALUE);
         if (!(raw instanceof String) || ((String) raw).isBlank()) {
@@ -68,7 +66,6 @@ public final class CucumberRuntimeConfig {
         return ((String) raw).trim();
     }
 
-    // -- парсим список значений через запятую
     private static List<String> readValues(Map<String, Object> config) {
         Object raw = config.get(KEY_VALUE);
         if (!(raw instanceof String) || ((String) raw).isBlank()) {

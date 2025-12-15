@@ -1,0 +1,27 @@
+# Конфигурация Selenium-модуля для Firefox
+
+browser: firefox
+driverVersion: null
+driverPath: null
+binaryPath: null
+
+pageLoadStrategy: eager
+headless: false
+window:
+  mode: maximize
+
+# Дополнительные аргументы командной строки (CLI arguments)
+args:
+  - -private
+#  - -devtools
+#  - -jsconsole
+
+# Внутренние настройки Firefox (about:config)
+preferences:
+#  - dom.webnotifications.enabled=false
+#  - geo.enabled=false
+#  - pdfjs.disabled=true
+#  - signon.rememberSignons=false
+#  - browser.translation.detectLanguage=false
+#  - intl.accept_languages=en-US  <-- Пример строки
+#  - network.http.max-connections=900 <-- Пример числа

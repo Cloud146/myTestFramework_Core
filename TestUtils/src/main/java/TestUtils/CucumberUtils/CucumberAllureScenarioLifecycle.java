@@ -11,9 +11,6 @@ public class CucumberAllureScenarioLifecycle {
 
     private static final ThreadLocal<String> currentUuid = new ThreadLocal<>();
 
-    /**
-     * Стартует новый тест-кейс в Allure для текущего сценария.
-     */
     public static void startScenario(Scenario scenario) {
         String uuid = UUID.randomUUID().toString();
         currentUuid.set(uuid);
@@ -31,9 +28,6 @@ public class CucumberAllureScenarioLifecycle {
         Allure.getLifecycle().startTestCase(uuid);
     }
 
-    /**
-     * Завершает тест-кейс в Allure, проставляя статус по результату сценария.
-     */
     public static void stopScenario(Scenario scenario) {
         String uuid = currentUuid.get();
         if (uuid == null) return;

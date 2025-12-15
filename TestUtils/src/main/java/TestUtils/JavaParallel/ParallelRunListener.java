@@ -8,10 +8,6 @@ import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 import java.util.List;
 
-/**
- * Слушатель, который включается до старта тестов.
- * Если находит класс с аннотацией @ParallelClass, принудительно включает параллелизм.
- */
 public class ParallelRunListener implements IAlterSuiteListener {
 
     private static final Logger log = Log.get(ParallelRunListener.class);
