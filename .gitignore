@@ -36,3 +36,19 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# --- WORKSPACE USER CONTENT ---
+# Игнорируем всё наполнение рабочего пространства,
+# так как оно будет подтягиваться из другого репозитория
+
+Workspace/src/test/
+
+# Игнорируем Java-тесты пользователей
+Workspace/src/test/java/tests/**
+
+# Игнорируем ресурсы пользователей (страницы, фичи, данные, конфиги)
+Workspace/src/test/resources/features/**
+Workspace/src/test/resources/pages/**
+Workspace/src/test/resources/testData/**
+Workspace/src/test/resources/configuration_files/**
+Workspace/src/test/java/runner/
